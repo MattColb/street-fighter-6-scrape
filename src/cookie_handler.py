@@ -1,4 +1,6 @@
 from selenium.webdriver.common.by import By
+import dotenv
+import os
 
 # Step 1: Parse the cookies.txt file
 def parse_netscape_cookies(file_path):
@@ -23,7 +25,8 @@ def parse_netscape_cookies(file_path):
     return cookies
 
 def add_cookies(driver):
-    cookies = parse_netscape_cookies("../cookies-streetfighter-com.txt")
+    dotenv.load_dotenv()
+    cookies = parse_netscape_cookies(os.getenv("COOKIE_NAME"))
 
     for cookie in cookies:
         try:

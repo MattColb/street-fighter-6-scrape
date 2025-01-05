@@ -1,14 +1,15 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 import time
-from cookie_handler import add_cookies
-from sql_interaction import sqlite_init
-from parse_html import parse_page
+from src.cookie_handler import add_cookies
+from src.sql_interaction import sqlite_init
+from src.parse_html import parse_page
+import argparse
+import dotenv
 import os
 
-import argparse
-
 def get_all_information(id=None):
+    dotenv.load_dotenv()
     parser = argparse.ArgumentParser(prog="Street Fighter 6 Scraper", 
                             description="This program scrapes information from the buckler website to track street fighter 6 matches")
     
@@ -32,7 +33,7 @@ def get_all_information(id=None):
         add_cookies(driver)
         driver.refresh()
 
-        sqlite_init("test.db")
+        sqlite_init(os.getenv("DBNAME"))
 
         while True:
 
@@ -54,8 +55,3 @@ def get_all_information(id=None):
             driver.refresh()
     finally:
         driver.quit()
-
-if __name__ == "__main__":
-    # os.remove("./test.db")
-    get_all_information()
-    pass

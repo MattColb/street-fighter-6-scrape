@@ -1,10 +1,12 @@
 from selenium.webdriver.common.by import By
 import time
+import os
+import dotenv
 import random
-from cookie_handler import close_cookies
+from src.cookie_handler import close_cookies
 import sqlite3
 import pandas as pd
-from helper_functions import extract_numbers_regex, get_rank, insert_uid_if_not_exists, get_control_type, get_match_result, check_if_replay_exists
+from src.helper_functions import extract_numbers_regex, get_rank, insert_uid_if_not_exists, get_control_type, get_match_result, check_if_replay_exists
 
 def parse_users(driver, match_div, conn, dt):
     p1_css_selector_dict = {
@@ -186,7 +188,8 @@ def parse_entire_match(list_item, driver):
 
     match_div = driver.find_element(By.CSS_SELECTOR, ".battle_data_modal__AED01")
     
-    filepath = "test.db"
+    dotenv.load_dotenv()
+    filepath = os.getenv("DBNAME")
     with sqlite3.connect(filepath) as conn:
         try:
             dt, replay_id = parse_match(driver, match_div, conn)
