@@ -16,9 +16,8 @@ def get_rank_stars(rank_number):
             return rank_number%5
 
 def get_legend_rank(match, selector, driver):
-    return "1st"
-    #This likely needs to be adjusted for p1 or p2 side
-    legend_num = driver.find_element(By.CSS_SELECTOR, selector)
+    #Str has no find_element
+    legend_num = match.find_element(By.CSS_SELECTOR, selector)
     return legend_num.text
 
 def extract_numbers_regex(string):
@@ -58,7 +57,7 @@ def get_match_result(img):
     result = match_results.get(src, "Loss")
     return result
 
-def get_rank(rank, match, selector, driver):
+def get_rank(rank, match, driver, selector=None):
     #Processing it out from the src path
     rank = rank.split("/")[-1]
     rank = rank.split("_")[0]
@@ -74,7 +73,7 @@ def get_rank(rank, match, selector, driver):
     if rank == 36:
         return "Master"
     if rank == 37:
-        return f"Legend {get_legend_rank(match, selector, driver)}"
+        return f"Legend {get_legend_rank(match, driver, selector)}"
     
     #General Logic
     rank_level = (rank-1)//5

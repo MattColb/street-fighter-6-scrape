@@ -7,17 +7,20 @@ import pandas as pd
 from helper_functions import extract_numbers_regex, get_rank, insert_uid_if_not_exists, get_control_type, get_match_result, check_if_replay_exists
 
 def parse_users(driver, match_div, conn, dt):
-    p1_css_selector_dict = {"username": ".battle_data_modal__inner___s_ZZ > div:nth-child(2) > div:nth-child(1) > p:nth-child(2) > a:nth-child(1) > span:nth-child(2)",
-                            "rank": ".battle_data_modal__inner___s_ZZ > div:nth-child(2) > div:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > span:nth-child(1) > img:nth-child(2)",
-                            "id": ".battle_data_modal__inner___s_ZZ > div:nth-child(2) > div:nth-child(1) > p:nth-child(2) > a:nth-child(1)",
-                            "lp_mr":".battle_data_modal__inner___s_ZZ > div:nth-child(2) > div:nth-child(1) > ul:nth-child(1) > li:nth-child(3)",
-                            "legend_selector":".battle_data_modal__inner___s_ZZ > div:nth-child(2) > div:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > p:nth-child(1) > span:nth-child(2)"
-                            }
+    p1_css_selector_dict = {
+        "username": ".battle_data_modal__inner___s_ZZ > div:nth-child(2) > div:nth-child(1) > p:nth-child(2) > a:nth-child(1) > span:nth-child(2)",
+        "rank": ".battle_data_modal__inner___s_ZZ > div:nth-child(2) > div:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > span:nth-child(1) > img:nth-child(2)",
+        "id": ".battle_data_modal__inner___s_ZZ > div:nth-child(2) > div:nth-child(1) > p:nth-child(2) > a:nth-child(1)",
+        "lp_mr":".battle_data_modal__inner___s_ZZ > div:nth-child(2) > div:nth-child(1) > ul:nth-child(1) > li:nth-child(3)",
+        "alt_rank":".battle_data_modal__inner___s_ZZ > div:nth-child(2) > div:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > p:nth-child(1) > span:nth-child(1) > span:nth-child(1) > img:nth-child(2)",
+        "legend_selector":".battle_data_modal__inner___s_ZZ > div:nth-child(2) > div:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > p:nth-child(1) > span:nth-child(2)"
+    }
     p2_css_selector_dict = {
         "username":".battle_data_modal__inner___s_ZZ > div:nth-child(4) > div:nth-child(1) > p:nth-child(2) > a:nth-child(1) > span:nth-child(2)",
         "rank":".battle_data_modal__inner___s_ZZ > div:nth-child(4) > div:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > span:nth-child(1) > img:nth-child(2)",
         "id":".battle_data_modal__inner___s_ZZ > div:nth-child(4) > div:nth-child(1) > p:nth-child(2) > a:nth-child(1)",
         "lp_mr":".battle_data_modal__inner___s_ZZ > div:nth-child(4) > div:nth-child(1) > ul:nth-child(1) > li:nth-child(3)",
+        "alt_rank":".battle_data_modal__inner___s_ZZ > div:nth-child(4) > div:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > p:nth-child(1) > span:nth-child(1) > span:nth-child(1) > img:nth-child(2)",
         "legend_selector":".battle_data_modal__inner___s_ZZ > div:nth-child(4) > div:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > p:nth-child(1) > span:nth-child(2)"
     }
 
@@ -45,11 +48,19 @@ def parse_users(driver, match_div, conn, dt):
         user_dict.update(lp_mr)
 
         #May be wrong on legend ranks
-        rank = match_div.find_element(By.CSS_SELECTOR, selector_dict.get("rank"))
-        rank = rank.get_attribute("src")
-        
-        legend_selector = selector_dict.get("legend_selector")
-        rank = get_rank(rank, match_div, legend_selector, driver)
+        if len(driver.find_elements(By.CSS_SELECTOR, selector_dict.get("rank"))) > 0:    
+            rank = match_div.find_element(By.CSS_SELECTOR, selector_dict.get("rank"))
+            rank = rank.get_attribute("src")
+            rank = get_rank(rank, match_div, driver)
+        if len(match_div.find_elements(By.CSS_SELECTOR, selector_dict.get("alt_rank"))) >0:
+            rank = match_div.find_element(By.CSS_SELECTOR, selector_dict.get("alt_rank"))
+            rank = rank.get_attribute("src")
+            legend_selector = selector_dict.get("legend_selector")
+            rank = get_rank(rank, match_div, driver, legend_selector)
+        else:
+            print("NO RANK FOUND")
+            rank = ""
+
         user_dict["rank"] = rank
         
 
@@ -166,7 +177,7 @@ def parse_entire_match(list_item, driver):
     close_cookies(driver)
     list_item.click()
     driver.back()
-
+    time.sleep(random.uniform(.5, 1))
 
     #Check if it is available to be clicked
     match_div = driver.find_element(By.CSS_SELECTOR, ".battle_data_modal__AED01")
