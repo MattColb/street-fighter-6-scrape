@@ -11,6 +11,7 @@ def parse_users(driver, match_div, conn, dt):
         "username": ".battle_data_modal__inner___s_ZZ > div:nth-child(2) > div:nth-child(1) > p:nth-child(2) > a:nth-child(1) > span:nth-child(2)",
         "rank": ".battle_data_modal__inner___s_ZZ > div:nth-child(2) > div:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > span:nth-child(1) > img:nth-child(2)",
         "id": ".battle_data_modal__inner___s_ZZ > div:nth-child(2) > div:nth-child(1) > p:nth-child(2) > a:nth-child(1)",
+        "character":".battle_data_modal__inner___s_ZZ > div:nth-child(2) > div:nth-child(2) > span:nth-child(1) > span:nth-child(1) > img:nth-child(2)",
         "lp_mr":".battle_data_modal__inner___s_ZZ > div:nth-child(2) > div:nth-child(1) > ul:nth-child(1) > li:nth-child(3)",
         "alt_rank":".battle_data_modal__inner___s_ZZ > div:nth-child(2) > div:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > p:nth-child(1) > span:nth-child(1) > span:nth-child(1) > img:nth-child(2)",
         "legend_selector":".battle_data_modal__inner___s_ZZ > div:nth-child(2) > div:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > p:nth-child(1) > span:nth-child(2)"
@@ -19,6 +20,7 @@ def parse_users(driver, match_div, conn, dt):
         "username":".battle_data_modal__inner___s_ZZ > div:nth-child(4) > div:nth-child(1) > p:nth-child(2) > a:nth-child(1) > span:nth-child(2)",
         "rank":".battle_data_modal__inner___s_ZZ > div:nth-child(4) > div:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > span:nth-child(1) > img:nth-child(2)",
         "id":".battle_data_modal__inner___s_ZZ > div:nth-child(4) > div:nth-child(1) > p:nth-child(2) > a:nth-child(1)",
+        "character":".battle_data_modal__inner___s_ZZ > div:nth-child(4) > div:nth-child(2) > span:nth-child(1) > span:nth-child(1) > img:nth-child(2)",
         "lp_mr":".battle_data_modal__inner___s_ZZ > div:nth-child(4) > div:nth-child(1) > ul:nth-child(1) > li:nth-child(3)",
         "alt_rank":".battle_data_modal__inner___s_ZZ > div:nth-child(4) > div:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > p:nth-child(1) > span:nth-child(1) > span:nth-child(1) > img:nth-child(2)",
         "legend_selector":".battle_data_modal__inner___s_ZZ > div:nth-child(4) > div:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > p:nth-child(1) > span:nth-child(2)"
@@ -36,6 +38,8 @@ def parse_users(driver, match_div, conn, dt):
         #Also pass connection or cursor
         insert_uid_if_not_exists(user_dict["user_id"], conn)
 
+        character = match_div.find_element(By.CSS_SELECTOR, selector_dict.get("character"))
+        user_dict["character"] = character.get_attribute("alt")
 
         lp = match_div.find_element(By.CSS_SELECTOR, selector_dict.get("lp_mr"))
         lp = lp.text
@@ -48,11 +52,11 @@ def parse_users(driver, match_div, conn, dt):
         user_dict.update(lp_mr)
 
         #May be wrong on legend ranks
-        if len(driver.find_elements(By.CSS_SELECTOR, selector_dict.get("rank"))) > 0:    
+        if len(match_div.find_elements(By.CSS_SELECTOR, selector_dict.get("rank"))) > 0:    
             rank = match_div.find_element(By.CSS_SELECTOR, selector_dict.get("rank"))
             rank = rank.get_attribute("src")
             rank = get_rank(rank, match_div, driver)
-        if len(match_div.find_elements(By.CSS_SELECTOR, selector_dict.get("alt_rank"))) >0:
+        elif len(match_div.find_elements(By.CSS_SELECTOR, selector_dict.get("alt_rank"))) >0:
             rank = match_div.find_element(By.CSS_SELECTOR, selector_dict.get("alt_rank"))
             rank = rank.get_attribute("src")
             legend_selector = selector_dict.get("legend_selector")
@@ -176,10 +180,10 @@ def parse_entire_match(list_item, driver):
     time.sleep(random.uniform(1,2))
     close_cookies(driver)
     list_item.click()
-    driver.back()
     time.sleep(random.uniform(.5, 1))
 
     #Check if it is available to be clicked
+
     match_div = driver.find_element(By.CSS_SELECTOR, ".battle_data_modal__AED01")
     
     filepath = "test.db"
@@ -199,7 +203,6 @@ def parse_entire_match(list_item, driver):
     close_cookies(driver)
     close_button = driver.find_element(By.CSS_SELECTOR, ".battle_data_close__A74hN")
     close_button.click()
-    driver.back()
 
 def parse_page(driver):
     #For each li in 

@@ -33,6 +33,8 @@ def add_cookies(driver):
 
 def close_cookies(driver):
     try:
+        if len(driver.find_elements(By.ID, "CybotCookiebotDialogBodyContentTitle")) == 0:
+            return
         cookie_button = driver.find_element(By.ID, "CybotCookiebotDialogBodyContentTitle")
         if cookie_button.is_displayed():
             driver.find_element(By.ID, "CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll").click()

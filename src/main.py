@@ -1,13 +1,10 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 import time
-import pandas as pd
-import random
-import re
-import sqlite3
 from cookie_handler import add_cookies
 from sql_interaction import sqlite_init
 from parse_html import parse_page
+import os
 
 import argparse
 
@@ -53,10 +50,12 @@ def get_all_information(id=None):
             # Move to the next page
             next_page = driver.find_element(By.CSS_SELECTOR, ".numberWrap > ul:nth-child(1) > li.active + li")
             next_page.click()
-            time.sleep(10)
+            time.sleep(5)
+            driver.refresh()
     finally:
         driver.quit()
 
 if __name__ == "__main__":
+    # os.remove("./test.db")
     get_all_information()
     pass

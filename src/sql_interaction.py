@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS Users(
     LP INTEGER,
     MR INTEGER,
     Rank text,
+    character text NOT NULL,
     occurence_dt TEXT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES User_Ids(user_id)
 );
