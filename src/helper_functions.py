@@ -16,6 +16,7 @@ def get_highest_dt(uid):
     return result.iloc[0,0]
 
 def get_latest_dt(id, conn):
+    #Returns the highest dt if it exists
     result = pd.read_sql_query(f"SELECT COUNT(*) FROM Finished_Ids WHERE user_id = {id}", conn)
     if result.iloc[0,0] == 0:
         return None

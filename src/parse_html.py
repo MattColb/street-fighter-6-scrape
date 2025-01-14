@@ -155,8 +155,8 @@ def parse_match(driver, match_div, conn, latest_dt, uid):
     date = date.text
     date = pd.to_datetime(date).tz_localize('US/Central').tz_convert('UTC').isoformat()
 
-    #Get the first date and save it somewhere
-    if latest_dt != None and date < latest_dt:
+    #Save the highest date if we have seen all matches after or if we have reached the end
+    if latest_dt != None and date <= latest_dt:
         print("Reached the end of matches that haven't been parsed: closing now!")
         d = get_highest_dt(uid)
         conn = sqlite3.connect(os.getenv("DBNAME"))
