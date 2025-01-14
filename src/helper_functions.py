@@ -1,6 +1,32 @@
 from selenium.webdriver.common.by import By
 import re
 import pandas as pd
+import sqlite3
+import os
+
+def get_highest_dt(uid):
+    query = f"""SELECT MAX(occurence_dt) FROM Matches m 
+    JOIN Match_Contestants mc ON 
+    mc.replay_id = m.replay_id
+    WHERE mc.user_id = {uid};
+    """
+    conn = sqlite3.connect(os.getenv("DBNAME"))
+    result = pd.read_sql_query(query, conn)
+    conn.close()
+    return result.iloc[0,0]
+
+def get_latest_dt(id, conn):
+    result = pd.read_sql_query(f"SELECT COUNT(*) FROM Finished_Ids WHERE user_id = {id}", conn)
+    if result.iloc[0,0] == 0:
+        return None
+    else:
+        result = pd.read_sql_query(f"SELECT latest_match FROM Finished_Ids WHERE user_id = {id}", conn)
+        return result.iloc[0,0]
+    
+def reached_latest_dt(id, dt, conn):
+    query = f"UPDATE Finished_Ids SET latest_match='{dt}' WHERE user_id = {id}"
+    conn.execute(query)
+    conn.commit()
 
 def get_control_type(control_type_src):
     control_type = control_type_src.split("/")[-1].split(".")[0][-1]

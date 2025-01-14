@@ -6,6 +6,14 @@ CREATE TABLE IF NOT EXISTS User_Ids(
 );
 """
 
+FINISHED_IDS_SQL = """
+CREATE TABLE IF NOT EXISTS Finished_Ids(
+    user_id text not null,
+    latest_match text not null,
+    FOREIGN KEY (user_id) REFERENCES User_Ids(user_id)
+);
+"""
+
 USER_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS Users(
     user_id text NOT NULL ,
@@ -61,4 +69,5 @@ def sqlite_init(filepath):
     conn.execute(MATCHES_TABLE_SQL)
     conn.execute(MATCH_CONTESTANTS_SQL)
     conn.execute(ROUND_SQL)
+    conn.execute(FINISHED_IDS_SQL)
     conn.close()

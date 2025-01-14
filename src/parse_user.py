@@ -6,25 +6,29 @@ from src.sql_interaction import sqlite_init
 from src.parse_html import parse_page
 import argparse
 import dotenv
+from src.helper_functions import get_latest_dt
 import os
+import sqlite3
 
-def get_all_information(id=None):
+def get_all_information(uid=None):
     dotenv.load_dotenv()
     parser = argparse.ArgumentParser(prog="Street Fighter 6 Scraper", 
                             description="This program scrapes information from the buckler website to track street fighter 6 matches")
     
-    if id == None:
+    if uid == None:
         parser.add_argument('-i', '--userid')
         args = parser.parse_args()
-        id = args.userid
+        uid = args.userid
+        
 
+    
     #Get the correct page
     page_number = 1
-    webpage = f"https://www.streetfighter.com/6/buckler/profile/{id}/battlelog?page={page_number}"
+    webpage = f"https://www.streetfighter.com/6/buckler/profile/{uid}/battlelog?page={page_number}"
     try:
         #Start a selenium browser and add cookies
         options = webdriver.FirefoxOptions()
-        # options.add_argument("-headless")
+        options.add_argument("-headless")
         # options.add_argument("--disable-extensions")
         driver = webdriver.Firefox(options=options)
         driver.get(webpage)
@@ -34,11 +38,15 @@ def get_all_information(id=None):
         driver.refresh()
 
         sqlite_init(os.getenv("DBNAME"))
+        conn = sqlite3.connect(os.getenv("DBNAME"))
+        latest_dt = get_latest_dt(uid, conn)
+        conn.close()
+
 
         while True:
 
             #Get the matches from the current page and add it to a data frame
-            parse_page(driver)
+            parse_page(driver, latest_dt, uid)
             
             #If it is the last page, then break
             page_list = driver.find_element(By.CSS_SELECTOR, ".numberWrap > ul:nth-child(1)")

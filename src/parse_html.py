@@ -4,9 +4,10 @@ import os
 import dotenv
 import random
 from src.cookie_handler import close_cookies
+import sys
 import sqlite3
 import pandas as pd
-from src.helper_functions import extract_numbers_regex, get_rank, insert_uid_if_not_exists, get_control_type, get_match_result, check_if_replay_exists
+from src.helper_functions import *
 
 def parse_users(driver, match_div, conn, dt):
     p1_css_selector_dict = {
@@ -144,11 +145,25 @@ def parse_rounds(driver, match_div, conn, replay_id):
     df = pd.DataFrame(rounds)
     df.to_sql("Match_Rounds", conn, if_exists="append", index=False)
 
-def parse_match(driver, match_div, conn):
+def parse_match(driver, match_div, conn, latest_dt, uid):
     header = match_div.find_element(By.CSS_SELECTOR, ".battle_data_header__xW2Ri")
     
     replay_id = header.find_element(By.CSS_SELECTOR, ".battle_data_replay_id__aSkZW")
     replay_id = replay_id.text.split("Replay ID")[-1]
+
+    date = header.find_element(By.CSS_SELECTOR, "ul.battle_data_date__f1sP6 > li:nth-child(1)")
+    date = date.text
+    date = pd.to_datetime(date).tz_localize('US/Central').tz_convert('UTC').isoformat()
+
+    #Get the first date and save it somewhere
+    if latest_dt != None and date < latest_dt:
+        print("Reached the end of matches that haven't been parsed: closing now!")
+        d = get_highest_dt(uid)
+        conn = sqlite3.connect(os.getenv("DBNAME"))
+        reached_latest_dt(uid, d, conn)
+        conn.close()
+        driver.close()
+        sys.exit()
 
     if check_if_replay_exists(replay_id, conn):
         print("Match already seen...")
@@ -159,10 +174,6 @@ def parse_match(driver, match_div, conn):
     
     match_type = header.find_element(By.CSS_SELECTOR, ".battle_data_place__CNyCJ")
     match_type = match_type.text
-    
-    date = header.find_element(By.CSS_SELECTOR, "ul.battle_data_date__f1sP6 > li:nth-child(1)")
-    date = date.text
-    date = pd.to_datetime(date).tz_localize('US/Central').tz_convert('UTC').isoformat()
 
     record_dict =  {
         "match_type":match_type,
@@ -178,13 +189,13 @@ def parse_match(driver, match_div, conn):
     return date, replay_id
 
 
-def parse_entire_match(list_item, driver):
+def parse_entire_match(list_item, driver, latest_dt, uid):
     time.sleep(random.uniform(1,2))
     close_cookies(driver)
     list_item.click()
     time.sleep(random.uniform(.5, 1))
 
-    #Check if it is available to be clicked
+    #Check if it is available to be clicked?
 
     match_div = driver.find_element(By.CSS_SELECTOR, ".battle_data_modal__AED01")
     
@@ -192,12 +203,13 @@ def parse_entire_match(list_item, driver):
     filepath = os.getenv("DBNAME")
     with sqlite3.connect(filepath) as conn:
         try:
-            dt, replay_id = parse_match(driver, match_div, conn)
+            dt, replay_id = parse_match(driver, match_div, conn, latest_dt, uid)
             if replay_id != None:
                 parse_users(driver, match_div, conn, dt)
                 parse_match_contestants(driver, match_div, conn, replay_id)
                 parse_rounds(driver, match_div, conn, replay_id)
                 conn.commit()
+                print("Added match successfully!")
         except Exception as e:
             print("Error", e)
             conn.rollback()
@@ -207,11 +219,11 @@ def parse_entire_match(list_item, driver):
     close_button = driver.find_element(By.CSS_SELECTOR, ".battle_data_close__A74hN")
     close_button.click()
 
-def parse_page(driver):
+def parse_page(driver, latest_dt, uid):
     #For each li in 
     ul_for_page = driver.find_element(By.CSS_SELECTOR, ".battle_data_battlelog__list__JNDjG")
     li_elements = ul_for_page.find_elements(By.TAG_NAME, "li")
     #Parses each one 10 times... (investigate this)
     for li in range(int(len(li_elements)/10)):
         list_item = li_elements[(li*10)+1]
-        parse_entire_match(list_item, driver)
+        parse_entire_match(list_item, driver, latest_dt, uid)
